@@ -1,7 +1,7 @@
 #' Generate a mean residual life plot
 #'
 #' @description
-#' Plots the mean residual life for a vector of data, with 95% confidence bands
+#' Plots the mean residual life for a vector of data, with 95\% confidence bands
 #'
 #' @param x     Numeric, vector.
 #' @param qs    Numeric, vector quantiles which will be marked on the x-axis. This
