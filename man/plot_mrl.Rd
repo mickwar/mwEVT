@@ -19,7 +19,7 @@ Defaults to FALSE. This would need to be TRUE for full control over the plot.}
 \item{...}{Additional arguments passed to plot().}
 }
 \description{
-Plots the mean residual life for a vector of data, with 95% confidence bands
+Plots the mean residual life for a vector of data, with 95 confidence bands
 }
 \details{
 If the generalized Pareto is a valid model for the tail of a distribution (i.e. given
