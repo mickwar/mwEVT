@@ -2,3 +2,4 @@
 
 export(decluster)
 export(plot_mrl)
+export(uni_excess)
