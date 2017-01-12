@@ -61,7 +61,7 @@ decluster = function(x, index, uq = 0.90, r = 0, u, doplot = TRUE, ...){
     if (missing(index))
         index = 1:length(x)
     ind1 = (which(c(x, c(rep(-Inf, r+1), Inf)) >= threshold))
-    ind2 = which(diff(c(as.numeric(times), rep(Inf, r+2))[ind1]) > r)
+    ind2 = which(diff(c(as.numeric(index), rep(Inf, r+2))[ind1]) > r)
     ind3 = apply(cbind(c(1, ind2[-length(ind2)]+1), ind2), 1,
         function(x) seq(x[1], x[2], by = 1))
 
