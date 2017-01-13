@@ -19,6 +19,9 @@ decluster(x, index, uq = 0.9, r = 0, u, doplot = TRUE, ...)
 chosen for uq.}
 
 \item{doplot}{Logical, should a plot be generated?}
+
+\item{...}{Additional arguments passed to the plot that is generated if
+doplot = TRUE.}
 }
 \value{
 The maximum _excess_ for each cluster, the number of clusters, the number of exceedances,

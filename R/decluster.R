@@ -10,6 +10,8 @@
 #' @param u         Numeric, if specified, the threshold is u and overrides what is
 #'                  chosen for uq.
 #' @param doplot    Logical, should a plot be generated?
+#' @param ...       Additional arguments passed to the plot that is generated if
+#'                  doplot = TRUE.
 #'
 #' @details
 #' The argument index may be used to specify when each observation in x has occurred.
