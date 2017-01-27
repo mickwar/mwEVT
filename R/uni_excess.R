@@ -1,24 +1,18 @@
-#' Univariate threshold excess model for climate observations and simulations
+#' Univariate threshold excess model
 #'
 #' @description
-#' Fit a univariate threshold exceedance model for a processed data set. The
-#' data should be in a matrix format where the first column is the time and
-#' all subsequent columns contain the values of the time series.
+#' Fit a standard univariate threshold exceedance model.
 #'
-#' @param x                 character, the name of the data, e.g. "decadal1961",
-#'                          "historical", or "obs19501999", corresponding to a
-#'                          processed data set.
-#' @param r                 numeric, nonnegative integer, specifies the degree
-#'                          of separation between clusters in a declustering
-#'                          scheme. A value of r=0 means each excess is given
-#'                          its own cluster. If r is not specified, it will be
-#'                          selected automatically.
+#' @param x                 Numeric vector of data.
 #' @param uq                numeric, within (0, 1), the quantile of the complete data
 #'                          (includes replicates if available) that determines the
 #'                          threshold
 #' @param threshold         numeric, values greater than threshold are considered
 #'                          excess. Defaults to the threshold given by uq, but if
 #'                          specified, uq is ignored.
+#' @param r                 Numeric, nonnegative integer, specifies the degree
+#'                          of separation between clusters in a declustering
+#'                          scheme. Defaults to r = 0 (no clustering).
 #' @param m.ksi,s.ksi       numeric, prior mean and sd for ksi, ksi is normal
 #' @param nburn             numeric, nonnegative integer, the first nburn samples
 #'                          are discared. Defaults to 80000.
@@ -38,58 +32,47 @@
 #' @export
 #'
 
-uni_excess = function(x, uq = 0.90, threshold, r = 0, m.ksi = 0, s.ksi = 10,
+x = rnorm(10000)
+uq = 0.90
+r = 0
+m.ksi = 0
+s.ksi = 10
+nburn = 10000
+nmcmc = 10000
+window = 200
+
+uni_excess = function(x, uq = 0.95, threshold, r = 0, m.ksi = 0, s.ksi = 10,
     nburn = 10000, nmcmc = 10000, window = 200, chain_init){
 
-   
+    require(mwBASE)
 
     if (missing(threshold))
         threshold = quantile(x, uq)
 
-    if (is.null(r))
-        r = r.select(output)
+    if (missing(chain_init))
+        chain_init = c(1, 1e-6)
 
-    ## This group runs together
-    message("Retrieving excesses ...")
-    output$y = NULL
-    output$n_c = 0
-    output$n_u = 0
-    output$n = 0
-    for (j in 1:length(output$run.index)){
-        tmp = decluster(x = output$varmat[,output$run.index[j]],
-            times = output$time.dates, u = output$threshold,
-            r = output$r, doplot = FALSE)
-        output$y = c(output$y, tmp$max_cluster_excess)
-        output$n_c = output$n_c + tmp$n_clust
-        output$n_u = output$n_u + tmp$n_u
-        output$n = output$n + tmp$n
-        }
+    dat = NULL
+    tmp = decluster(x = x, r = r, doplot = FALSE)
+    dat$y = tmp$max_cluster_excess
+    dat$n_c = tmp$n_clust
+    dat$n_u = tmp$n_u
+    dat$n = tmp$n
     rm(tmp)
-    ## End group
 
     ### MCMC
-    nparam = 2
-    params = matrix(0, nburn + nmcmc, nparam)
-    accept = double(nburn + nmcmc)
-    cand.sig = diag(0.1, nparam)
-
-    params[1,] = chain_start
-
-    lower = c(0, -Inf)
-    upper = c(Inf, Inf)
-
-    calc.post = function(x, params){
+    calc.post = function(dat, params){
         # x is a list where x$y is the exceedances, x$n_c is the number of clusters
         sigma = params[1]
         ksi = params[2]
         # (lower) boundary check
-        if (any(1 + ksi*x$y/sigma < 0))
+        if (any(1 + ksi*dat$y/sigma < 0))
             return (-Inf)
         # Likelihood
         if (ksi != 0){
-            out = -x$n_c*log(sigma) - (1 + 1/ksi)*sum(log(1+ksi*x$y/sigma))
+            out = -dat$n_c*log(sigma) - (1 + 1/ksi)*sum(log(1+ksi*dat$y/sigma))
         } else {
-            out = -x$n_c*log(sigma) - sum(x$y)/sigma
+            out = -dat$n_c*log(sigma) - sum(dat$y)/sigma
             }
         # Priors
         out = out - log(sigma)
@@ -97,58 +80,26 @@ uni_excess = function(x, uq = 0.90, threshold, r = 0, m.ksi = 0, s.ksi = 10,
         return (out)
         }
 
-    post = calc.post(output, params[1,])
+    out = mcmc_sampler(dat, calc.post, 2, nmcmc = nmcmc, nburn = nburn,
+        nthin = 1, window = window, bounds = list("lower" = c(0, -Inf),
+        "upper" = c(Inf, Inf)), chain_init = chain_init)
 
-    message("Obtaining posterior samples ...")
-    for (i in 2:(nburn + nmcmc)){
-        if (floor(i/window) == i/window)
-            cat("\r   ", i, "/", nburn+nmcmc)
-        params[i,] = params[i-1,]
-        cand = mvrnorm(1, params[i-1,], cand.sig)
-        if (all(cand > lower) && all(cand < upper)){
-            cand.post = calc.post(output, cand)
-            if (log(runif(1)) <= cand.post - post){
-                post = cand.post
-                params[i,] = cand
-                accept[i] = 1
-                }
-            }
-        if ((floor(i/window) == i/window) && (i <= nburn))
-            cand.sig = autotune(mean(accept[(i-window+1):i]), target = 0.234, k = window/50) *
-                (cand.sig + window * var(params[(i-window+1):i,]) / i)
-        if (i == (nburn + nmcmc))
-            cat("\n")
-        }
 
-    params = tail(params, nmcmc)
-    accept = tail(accept, nmcmc)
+    mean(out$accept)
 
-    ### Beta(1/2, 1/2) priors assumed for zeta and theta
-    # output$n_u/output$n   # zeta mle
-    zeta = rbeta(nmcmc, output$n_u + 1/2, output$n - output$n_u + 1/2)
 
-    # output$n_c/output$n_u # theta mle
-    theta = rbeta(nmcmc, output$n_c + 1/2, output$n_u - output$n_c + 1/2)
-
-    params = cbind(params, zeta, theta)
-    colnames(params)[1:2] = c("sigma", "ksi")
-
-    output$params = params
-    output$accept = accept
-    output$cand.sig = cand.sig
-
-    output$hpds = lapply(apply(params, 2, function(x) list(range(hpd_mult(x)))), "[[", 1)
+    out$hpds = lapply(apply(out$params, 2, function(x) list(range(hpd_mult(x)))), "[[", 1)
 
     ### Calculations for diagnostic plots
     message("Computing return levels and other diagnostics ...")
-    tmp = diag_computations(output, llu = 100, additional.return.periods = c(20, 30, 50))
-    output$return.period = tmp$return.period
-    output$lm1           = tmp$lm1
-    output$lq1           = tmp$lq1
-    output$lm2           = tmp$lm2
-    output$lq2           = tmp$lq2
-    output$Zm            = tmp$Zm
-    output$Zq            = tmp$Zq              
+    tmp = diag_computations(out, llu = 100, additional.return.periods = c(20, 30, 50))
+    out$return.period = tmp$return.period
+    out$lm1           = tmp$lm1
+    out$lq1           = tmp$lq1
+    out$lm2           = tmp$lm2
+    out$lq2           = tmp$lq2
+    out$Zm            = tmp$Zm
+    out$Zq            = tmp$Zq              
     rm(tmp)
 
     ### Compute DIC
