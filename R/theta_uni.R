@@ -173,7 +173,7 @@ theta_uni = function(y, u, ord, prior, likelihood, method, bsamp = 10000, ...){
         }
 
     ### Bootstrap (for classical method)
-    if (method == "classical")
+    if (method == "classical"){
         theta_vec = double(bsamp)
         for (i in 1:bsamp){
 
@@ -183,6 +183,7 @@ theta_uni = function(y, u, ord, prior, likelihood, method, bsamp = 10000, ...){
             tmp = c(inter.Clust[samp.inter], unlist(intra.Clust[samp.intra]))
             theta_vec[i] = classic_est(tmp)
             }
+        }
 
     # Get the greatest value within each (independent) cluster
     ind.obs = sapply(nice.C, max)
