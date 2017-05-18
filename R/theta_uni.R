@@ -174,8 +174,8 @@ theta_uni = function(y, u, ord, prior, likelihood, method, bsamp = 10000, ...){
 
     ### Bootstrap (for classical method)
     if (method == "classical")
-        theta_vec = double(10000)
-        for (i in 1:length(theta.vec)){
+        theta_vec = double(bsamp)
+        for (i in 1:bsamp){
 
             samp.inter = sample(C-1, replace = TRUE)
             samp.intra = sample(C, replace = TRUE)
