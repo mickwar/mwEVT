@@ -4,7 +4,7 @@
 \alias{theta_uni}
 \title{Extremal index estimation}
 \usage{
-theta_uni(y, u, ord, prior, likelihood, method, ...)
+theta_uni(y, u, ord, prior, likelihood, method, bsamp = 10000, ...)
 }
 \arguments{
 \item{y}{Numeric, sequence of depedent random variables. May be a matrix.
@@ -19,6 +19,9 @@ See details.}
 \item{likelihood}{Character, either "ferro" or "suveges" (default).}
 
 \item{method}{Character, either "classical" or "bayesian" (default).}
+
+\item{bsamp}{Numeric, number of bootstrap samples for "classical" method.
+Defaults to 10000.}
 
 \item{...}{Additional arguments passed to mwBASE::mcmc_sampler.}
 }

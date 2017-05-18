@@ -12,6 +12,8 @@
 #' @param prior         List.
 #' @param likelihood    Character, either "ferro" or "suveges" (default).
 #' @param method        Character, either "classical" or "bayesian" (default).
+#' @param bsamp         Numeric, number of bootstrap samples for "classical" method.
+#'                      Defaults to 10000.
 #' @param ...           Additional arguments passed to mwBASE::mcmc_sampler.
 #'
 #' @details
@@ -27,7 +29,7 @@
 #' @export
 #' @example examples/ex_theta_uni.R
 
-theta_uni = function(y, u, ord, prior, likelihood, method, ...){
+theta_uni = function(y, u, ord, prior, likelihood, method, bsamp = 10000, ...){
     require(mwBASE)
 
     n = NROW(y)
@@ -72,7 +74,7 @@ theta_uni = function(y, u, ord, prior, likelihood, method, ...){
 
     if (method == "classical"){
         if (likelihood == "ferro"){
-            intervals_est = function(Tu){
+            classic_est = function(Tu){
                 if (length(Tu) == 0)
                     return (1)
                 if (max(Tu) <= 2){
@@ -82,15 +84,14 @@ theta_uni = function(y, u, ord, prior, likelihood, method, ...){
                     }
                 return (out)
                 }
-            theta_hat = intervals_est(Tu)
         } else {
-            suveges_mle = function(Tu){
+            classic_est = function(Tu){
                 ((1-emp.p)*sum(Tu - 1)+2*(N-1)-m1 -
                     sqrt(((1-emp.p)*sum(Tu - 1)+2*(N-1)-m1)^2 - 8*(N-1-m1)*(1-emp.p)*sum(Tu-1))) / 
                     (2*(1-emp.p)*sum(Tu-1))
                 }
-            theta_hat = suveges_mle(Tu)
             }
+        theta_hat = classic_est(Tu)
     } else {
         if (missing(prior)){
             if (likelihood == "ferro")
@@ -171,11 +172,24 @@ theta_uni = function(y, u, ord, prior, likelihood, method, ...){
         nice.C[[k-1]] = y[nice.S[[k-1]]]
         }
 
+    ### Bootstrap (for classical method)
+    if (method == "classical")
+        theta_vec = double(10000)
+        for (i in 1:length(theta.vec)){
+
+            samp.inter = sample(C-1, replace = TRUE)
+            samp.intra = sample(C, replace = TRUE)
+
+            tmp = c(inter.Clust[samp.inter], unlist(intra.Clust[samp.intra]))
+            theta_vec[i] = classic_est(tmp)
+            }
+
     # Get the greatest value within each (independent) cluster
     ind.obs = sapply(nice.C, max)
 
     if (method == "classical"){
-        return (list("y" = ind.obs, "N" = N, "T_C" = T_C, "theta" = theta_hat))
+        return (list("y" = ind.obs, "N" = N, "T_C" = T_C, "theta" = theta_hat,
+            "bootstrap" = theta_vec))
     } else {
         return (list("y" = ind.obs, "N" = N, "T_C" = T_C, "mcmc" = mcmc_out$param[,1]))
         }
