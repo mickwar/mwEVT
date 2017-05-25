@@ -1,4 +1,4 @@
-theta_hier = function(y, u, n, prior, ...){
+theta_hier = function(y, u, n, prior, likelihood, ...){
     require(mwBASE)
     exceedance = apply(y, 2, function(x) which(x > u))
 
@@ -7,63 +7,111 @@ theta_hier = function(y, u, n, prior, ...){
 
     R = NCOL(y)
 
+    if (missing(u))
+        u = quantile(y, 0.90)
+
+    if (missing(likelihood))
+        likelihood = "suveges")
+
+    if (!(likelihood %in% c("ferro", "suveges")))
+        stop("likelihood must be either 'ferro' or 'suveges'.")
+
+
     Tu = lapply(exceedance, diff)
     N = sapply(exceedance, length)
     m1 = sapply(Tu, function(x) sum(x == 1))
-    emp.p = mean(y <= u)
+
+    emp.p = ifelse(likelihood == "ferro", mean(y <= u),
+        apply(y, 2, function(x) mean(x <= u)))
 
     dat = list("y" = y, "exceed" = exceedance, 
         "Tu" = Tu, "N" = N, "m1" = m1, "emp.p" = emp.p)
 
-    if (missing(prior))
-        prior = list("theta_a" = 1/2, "theta_b" = 1,
-            "p_a" = emp.p*100, "p_b" = (1-emp.p)*100,
-            "nu_a" = 1, "nu_b" = 1/10,
-            "tau_a" = 1, "tau_b" = 1/10)
 
-    calc.post = function(x, param){
-        R = length(x$exceed)
-        
-        # theta_i, p_i for each ``break''
-        theta_i = param[1:R]
-        p_i = param[R + (1:R)]
+    if (likelihood == "ferro"){
+        if (missing(prior))
+            prior = list("theta_a" = 1/2, "theta_b" = 1,
+                "p_a" = emp.p*100, "p_b" = (1-emp.p)*100,
+                "nu_a" = 1, "nu_b" = 1/10,
+                "tau_a" = 1, "tau_b" = 1/10)
+        calc.post = function(x, param){
+            R = length(x$exceed)
+            
+            # theta_i, p_i for each ``break''
+            theta_i = param[1:R]
+            p_i = param[R + (1:R)]
 
-        theta = param[2*R + 1]
-        p = param[2*R + 2]
-        nu = param[2*R + 3]
-        tau = param[2*R + 4]
+            theta = param[2*R + 1]
+            p = param[2*R + 2]
+            nu = param[2*R + 3]
+            tau = param[2*R + 4]
 
-        if (any(theta_i <= 0 | theta_i > 1))
-            return (-Inf)
-        if (any(p_i <= 0 | p_i >= 1))
-            return (-Inf)
-        if (theta <= 0 || theta > 1)
-            return (-Inf)
-        if (p <= 0 || p > 1)
-            return (-Inf)
-        if (nu <= 0)
-            return (-Inf)
-        if (tau <= 0)
-            return (-Inf)
+            if (any(theta_i <= 0 | theta_i > 1))
+                return (-Inf)
+            if (any(p_i <= 0 | p_i >= 1))
+                return (-Inf)
+            if (theta <= 0 || theta > 1)
+                return (-Inf)
+            if (p <= 0 || p > 1)
+                return (-Inf)
+            if (nu <= 0)
+                return (-Inf)
+            if (tau <= 0)
+                return (-Inf)
 
-        m1 = x$m1
+            m1 = x$m1
 
-        # Likelihood (from Eq. 3)
-        out = sum(m1 * log(1 - theta_i*p_i^theta_i) + 
-            ifelse(N - 1 - m1 >= 0, N - 1 - m1, 0) * (log(theta_i) + log(1-p_i^theta_i)) + 
-            theta_i*log(p_i) * sapply(x$Tu, function(x) sum(x - 1)))
+            # Likelihood (from Eq. 3)
+            out = sum(m1 * log(1 - theta_i*p_i^theta_i) + 
+                ifelse(N - 1 - m1 >= 0, N - 1 - m1, 0) * (log(theta_i) + log(1-p_i^theta_i)) + 
+                theta_i*log(p_i) * sapply(x$Tu, function(x) sum(x - 1)))
 
-        # Priors
-        out = out + sum(dbeta(theta_i, theta*nu, (1-theta)*nu, log = TRUE))
-        out = out + sum(dbeta(p_i, p*tau, (1-p)*tau, log = TRUE))
-        out = out + dbeta(theta, prior$theta_a, prior$theta_b, log = TRUE)
-        out = out + dbeta(p, prior$p_a, prior$p_b, log = TRUE)
-        out = out + dgamma(nu, prior$nu_a, prior$nu_b, log = TRUE)
-        out = out + dgamma(tau, prior$tau_a, prior$tau_b, log = TRUE)
-        return (out)
+            # Priors
+            out = out + sum(dbeta(theta_i, theta*nu, (1-theta)*nu, log = TRUE))
+            out = out + sum(dbeta(p_i, p*tau, (1-p)*tau, log = TRUE))
+            out = out + dbeta(theta, prior$theta_a, prior$theta_b, log = TRUE)
+            out = out + dbeta(p, prior$p_a, prior$p_b, log = TRUE)
+            out = out + dgamma(nu, prior$nu_a, prior$nu_b, log = TRUE)
+            out = out + dgamma(tau, prior$tau_a, prior$tau_b, log = TRUE)
+            return (out)
+            }
+        mcmc_out = mcmc_sampler(data = dat, target = calc.post, nparam = 2*R + 4,
+            groups = list(1:R, R + (1:R), 2*R + (1:4)), ...)
+    } else {
+        if (missing(prior))
+            prior = list("theta_a" = 1/2, "theta_b" = 1,
+                "nu_a" = 1, "nu_b" = 1/10)
+        calc.post = function(x, param){
+            R = length(x$exceed)
+            
+            # theta_i, p_i for each ``break''
+            theta_i = param[1:R]
+
+            theta = param[R+1]
+            nu = param[R+2]
+
+            if (any(theta_i <= 0 | theta_i > 1))
+                return (-Inf)
+            if (theta <= 0 || theta > 1)
+                return (-Inf)
+            if (nu <= 0)
+                return (-Inf)
+
+            m1 = x$m1
+
+            # Suveges likelihood
+            out = sum(m1*log(1-theta_i) + 2*(N - 1 - m1)*log(theta_i) - theta_i*
+                (1 - emp.p)*sapply(x$Tu, function(x) sum(x - 1)))
+
+            # Priors
+            out = out + sum(dbeta(theta_i, theta*nu, (1-theta)*nu, log = TRUE))
+            out = out + dbeta(theta, prior$theta_a, prior$theta_b, log = TRUE)
+            out = out + dgamma(nu, prior$nu_a, prior$nu_b, log = TRUE)
+            return (out)
+            }
+        mcmc_out = mcmc_sampler(data = dat, target = calc.post, nparam = 2*R + 4,
+            groups = list(1:R, R + (1:R), 2*R + (1:4)), ...)
         }
-    mcmc_out = mcmc_sampler(data = dat, target = calc.post, nparam = 2*R + 4,
-        groups = list(1:R, R + (1:R), 2*R + (1:4)), ...)
 
     theta.hat = colMeans(mcmc_out$param[,1:R])
 
