@@ -1,3 +1,28 @@
+#' Extremal index estimation
+#'
+#' @description
+#' Fill
+#'
+#' @param y             Numeric, sequence of depedent random variables. May be a matrix.
+#'                      See details.
+#' @param u             Numeric, the threshold. Defaults to quantile(y, 0.90).
+#' @param ord           Numeric, vector of length R = NCOL(y). Defaults to 1:R. See details.
+#' @param prior         List.
+#' @param likelihood    Character, either "ferro" or "suveges" (default).
+#' @param ...           Additional arguments passed to mwBASE::mcmc_sampler.
+#'
+#' @details
+#' The data y is expected to be observed values along an evenly-spaced grid of width 1.
+#' If y is an n x R matrix, then it will be collapsed to y = c(y[,ord]). This may be
+#' the case when working with multiple realizations from the same process or with
+#' specific seasons on a time-series.
+#'
+#' The 'classical' option for method produces the estimates given by either Ferro and
+#' Segers (2003) or Suveges (2007). When method == 'bayesian' the likelihoods given in
+#' the aforementioned papers are used to produce posterior samples for theta.
+#'
+#' @export
+
 theta_hier = function(y, u, n, prior, likelihood, ...){
     require(mwBASE)
 

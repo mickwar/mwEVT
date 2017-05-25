@@ -2,5 +2,6 @@
 
 export(decluster)
 export(plot_mrl)
+export(theta_hier)
 export(theta_uni)
 export(x)
