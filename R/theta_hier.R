@@ -29,12 +29,8 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
     if (missing(n))
         n = NROW(y)
 
-    R = NCOL(y)
-
     if (missing(u))
         u = quantile(y, 0.90)
-
-    exceedance = apply(y, 2, function(x) which(x > u))
 
     if (missing(likelihood))
         likelihood = "suveges"
@@ -42,10 +38,24 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
     if (!(likelihood %in% c("ferro", "suveges")))
         stop("likelihood must be either 'ferro' or 'suveges'.")
 
+    exceedance = apply(y, 2, function(x) which(x > u))
+
+    N = sapply(exceedance, length)
+
+    # Can't do the analysis when only one exceedance is observed
+    tmp = which(N == 1)
+    if (length(tmp) > 0){
+        exceedance = exceedance[-tmp]
+        N = N[-tmp]
+        y = y[,-tmp]
+        warning(paste0("One exceedance observed in column(s) ", tmp, ".\n",
+            "Proceeding with analysis, but omitting the column(s).\n",
+            "The threshold may be too large."))
+        }
 
     Tu = lapply(exceedance, diff)
-    N = sapply(exceedance, length)
     m1 = sapply(Tu, function(x) sum(x == 1))
+    R = NCOL(y)
 
     emp.p = ifelse(likelihood == "ferro", mean(y <= u),
         apply(y, 2, function(x) mean(x <= u)))
@@ -155,7 +165,7 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
         T_C[j] = tmp[[j]][C[j]]
         while (!(tmp[[j]][C[j]-1] > T_C[j]) && (C[j] > 1)){
             C[j] = C[j] - 1
-            T_C[j] = tmp[[j]][C[j]]
+            T_C[j] = tmp[[j]][C[j]] ###
             }
         }
 
