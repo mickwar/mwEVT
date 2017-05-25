@@ -1,6 +1,5 @@
 theta_hier = function(y, u, n, prior, likelihood, ...){
     require(mwBASE)
-    exceedance = apply(y, 2, function(x) which(x > u))
 
     if (missing(n))
         n = NROW(y)
@@ -10,8 +9,10 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
     if (missing(u))
         u = quantile(y, 0.90)
 
+    exceedance = apply(y, 2, function(x) which(x > u))
+
     if (missing(likelihood))
-        likelihood = "suveges")
+        likelihood = "suveges"
 
     if (!(likelihood %in% c("ferro", "suveges")))
         stop("likelihood must be either 'ferro' or 'suveges'.")
@@ -160,7 +161,7 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
         ind.obs[[j]] = sapply(nice.C, max) # Get the greatest value within each (independent) cluster
         }
 
-    par = mcmc_out$params[,c(1:R, 2*R+1)]
+    par = mcmc_out$params[,c(1:R, ifelse(likelihood == "ferro", 2, 1)*R+1)]
 
     return (list("y" = ind.obs, "N" = N, "T_C" = T_C, "mcmc" = par))
     }
