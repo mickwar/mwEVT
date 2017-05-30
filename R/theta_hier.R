@@ -48,10 +48,12 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
         exceedance = exceedance[-tmp]
         N = N[-tmp]
         y = y[,-tmp]
-        warning(paste0("Zero or one exceedance observed in column(s) ", tmp, ".\n",
+        warning(paste0("Zero or one exceedance observed in column(s) ",
+            paste0(tmp, collapse = " "), ".\n",
             "  Proceeding with analysis, but omitting the column(s).\n",
             "  The threshold may be too large."))
         }
+    keep.index = which(N > 1)
 
     Tu = lapply(exceedance, diff)
     m1 = sapply(Tu, function(x) sum(x == 1))
@@ -198,5 +200,5 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
 
     par = mcmc_out$params[,c(1:R, ifelse(likelihood == "ferro", 2, 1)*R+1)]
 
-    return (list("y" = ind.obs, "N" = N, "T_C" = T_C, "mcmc" = par))
+    return (list("y" = ind.obs, "N" = N, "T_C" = T_C, "mcmc" = par, "keep" = keep.index))
     }
