@@ -43,6 +43,7 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
     N = sapply(exceedance, length)
 
     # Can't do the analysis when only one exceedance is observed
+    keep.index = which(N > 1)
     tmp = which(N <= 1)
     if (length(tmp) > 0){
         exceedance = exceedance[-tmp]
@@ -53,7 +54,6 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
             "  Proceeding with analysis, but omitting the column(s).\n",
             "  The threshold may be too large."))
         }
-    keep.index = which(N > 1)
 
     Tu = lapply(exceedance, diff)
     m1 = sapply(Tu, function(x) sum(x == 1))
