@@ -148,7 +148,7 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
             return (out)
             }
         mcmc_out = mcmc_sampler(data = dat, target = calc.post, nparam = R + 2,
-            groups = list(1:R, (1:2)), ...)
+            groups = list(1:R, R+(1:2)), ...)
         }
 
     theta.hat = colMeans(mcmc_out$param[,1:R])
