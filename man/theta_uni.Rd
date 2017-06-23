@@ -89,4 +89,3 @@ out = theta_uni(y, quantile(y, 0.95), nburn = 40000, nmcmc = 20000)
 mean(out$mcmc)     # 0.267
 quantile(out$mcmc, c(0.025, 0.975))    # c(0.214, 0.325)
 }
-

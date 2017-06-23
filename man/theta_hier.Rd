@@ -33,4 +33,3 @@ The 'classical' option for method produces the estimates given by either Ferro a
 Segers (2003) or Suveges (2007). When method == 'bayesian' the likelihoods given in
 the aforementioned papers are used to produce posterior samples for theta.
 }
-

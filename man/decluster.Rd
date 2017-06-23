@@ -60,4 +60,3 @@ decluster(x, uq = 0.5, r=5) # 3 clusters
 decluster(x, uq = 0.5, r=6) # 2 clusters
 decluster(x, uq = 0.5, r=7) # 1 cluster
 }
-

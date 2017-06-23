@@ -48,4 +48,3 @@ Fit a standard univariate threshold exceedance model.
 
 }
 \keyword{datasets}
-

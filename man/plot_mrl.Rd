@@ -36,4 +36,3 @@ and the lines.
 plot_mrl(rnorm(1000))
 plot_mrl(rgamma(1000, 1, 1))
 }
-
