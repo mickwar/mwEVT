@@ -68,7 +68,7 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
 
     if (likelihood == "ferro"){
         if (missing(prior))
-            prior = list("theta_a" = 1/2, "theta_b" = 1,
+            prior = list("theta_a" = 1, "theta_b" = 1/2,
                 "p_a" = emp.p*100, "p_b" = (1-emp.p)*100,
                 "nu_a" = 1, "nu_b" = 1/10,
                 "tau_a" = 1, "tau_b" = 1/10)
@@ -117,7 +117,7 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
             groups = list(1:R, R + (1:R), 2*R + (1:4)), ...)
     } else {
         if (missing(prior))
-            prior = list("theta_a" = 1/2, "theta_b" = 1,
+            prior = list("theta_a" = 1, "theta_b" = 1/2,
                 "nu_a" = 1, "nu_b" = 1/10)
         calc.post = function(x, param){
             R = length(x$exceed)

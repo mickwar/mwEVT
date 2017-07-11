@@ -95,10 +95,10 @@ theta_uni = function(y, u, ord, prior, likelihood, method, bsamp = 10000, ...){
     } else {
         if (missing(prior)){
             if (likelihood == "ferro")
-                prior = list("theta_a" = 1/2, "theta_b" = 1,
+                prior = list("theta_a" = 1, "theta_b" = 1/2,
                     "p_a" = emp.p*100, "p_b" = (1-emp.p)*100)
             if (likelihood == "suveges")
-                prior = list("theta_a" = 1/2, "theta_b" = 1)
+                prior = list("theta_a" = 1, "theta_b" = 1/2)
             }
 
         if (likelihood == "ferro"){
