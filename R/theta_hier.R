@@ -48,7 +48,7 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
     if (length(tmp) > 0){
         exceedance = exceedance[-tmp]
         N = N[-tmp]
-        y = y[,-tmp]
+        y = as.matrix(y[,-tmp])
         warning(paste0("Zero or one exceedance observed in column(s) ",
             paste0(tmp, collapse = " "), ".\n",
             "  Proceeding with analysis, but omitting the column(s).\n",
@@ -151,8 +151,11 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
             groups = list(1:R, R+(1:2)), ...)
         }
 
-    theta.hat = colMeans(as.matrix(mcmc_out$param[,1:R]))
-
+    if (R > 1){
+        theta.hat = colMeans(mcmc_out$param[,1:R])
+    } else {
+        theta.hat = mean(mcmc_out$param[,1])
+        }
 
     ### Decluster
     C = floor(theta.hat*N)+1
