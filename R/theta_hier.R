@@ -151,7 +151,7 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
             groups = list(1:R, R+(1:2)), ...)
         }
 
-    theta.hat = colMeans(mcmc_out$param[,1:R])
+    theta.hat = colMeans(as.matrix(mcmc_out$param[,1:R]))
 
 
     ### Decluster
