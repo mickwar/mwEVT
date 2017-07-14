@@ -4,7 +4,7 @@
 \alias{theta_hier}
 \title{Extremal index estimation}
 \usage{
-theta_hier(y, u, n, prior, likelihood, K = 1, ...)
+theta_hier(y, u, n, prior, likelihood, K = 1, chain_init, ...)
 }
 \arguments{
 \item{y}{Numeric, sequence of depedent random variables. May be a matrix.

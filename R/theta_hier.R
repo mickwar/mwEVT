@@ -25,7 +25,7 @@
 #'
 #' @export
 
-theta_hier = function(y, u, n, prior, likelihood, K = 1, ...){
+theta_hier = function(y, u, n, prior, likelihood, K = 1, chain_init, ...){
     require(mwBASE)
 
     if (missing(n))
