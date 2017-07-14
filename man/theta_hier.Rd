@@ -4,7 +4,7 @@
 \alias{theta_hier}
 \title{Extremal index estimation}
 \usage{
-theta_hier(y, u, n, prior, likelihood, ...)
+theta_hier(y, u, n, prior, likelihood, K = 1, ...)
 }
 \arguments{
 \item{y}{Numeric, sequence of depedent random variables. May be a matrix.
@@ -15,6 +15,9 @@ See details.}
 \item{prior}{List.}
 
 \item{likelihood}{Character, either "ferro" or "suveges" (default).}
+
+\item{K}{Numeric, the run parameter for likelihood = "suveges" only. Defaults
+to K = 1, the model proposed in Suveges (2007).}
 
 \item{...}{Additional arguments passed to mwBASE::mcmc_sampler.}
 
@@ -30,6 +33,6 @@ the case when working with multiple realizations from the same process or with
 specific seasons on a time-series.
 
 The 'classical' option for method produces the estimates given by either Ferro and
-Segers (2003) or Suveges (2007). When method == 'bayesian' the likelihoods given in
+Segers (2003) or Suveges and Davison (2010). When method == 'bayesian' the likelihoods given in
 the aforementioned papers are used to produce posterior samples for theta.
 }

@@ -9,6 +9,8 @@
 #' @param ord           Numeric, vector of length R = NCOL(y). Defaults to 1:R. See details.
 #' @param prior         List.
 #' @param likelihood    Character, either "ferro" or "suveges" (default).
+#' @param K             Numeric, the run parameter for likelihood = "suveges" only. Defaults
+#'                      to K = 1, the model proposed in Suveges (2007).
 #' @param ...           Additional arguments passed to mwBASE::mcmc_sampler.
 #'
 #' @details
@@ -18,12 +20,12 @@
 #' specific seasons on a time-series.
 #'
 #' The 'classical' option for method produces the estimates given by either Ferro and
-#' Segers (2003) or Suveges (2007). When method == 'bayesian' the likelihoods given in
+#' Segers (2003) or Suveges and Davison (2010). When method == 'bayesian' the likelihoods given in
 #' the aforementioned papers are used to produce posterior samples for theta.
 #'
 #' @export
 
-theta_hier = function(y, u, n, prior, likelihood, ...){
+theta_hier = function(y, u, n, prior, likelihood, K = 1, ...){
     require(mwBASE)
 
     if (missing(n))
@@ -56,14 +58,22 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
         }
 
     Tu = lapply(exceedance, diff)
-    m1 = sapply(Tu, function(x) sum(x == 1))
-    R = NCOL(y)
-
     emp.p = ifelse(likelihood == "ferro", mean(y <= u),
         apply(y, 2, function(x) mean(x <= u)))
+    R = NCOL(y)
 
-    dat = list("y" = y, "exceed" = exceedance, 
-        "Tu" = Tu, "N" = N, "m1" = m1, "emp.p" = emp.p)
+    if (likelihood == "ferro"){
+        K = 0
+        m1 = sapply(Tu, function(x) sum(x == 1))
+        dat = list("y" = y, "exceed" = exceedance, 
+            "Tu" = Tu, "N" = N, "m1" = m1, "emp.p" = emp.p)
+        }
+    if (likelihood == "suveges"){
+        SK = lapply(Tu, function(x) ifelse(x > K, x - K, 0))
+        N_C = sapply(SK, function(x) sum(x != 0))
+        dat = list("y" = y, "exceed" = exceedance, 
+            "SK" = SK, "N" = N, "N_C" = N_C, "emp.p" = emp.p)
+        }
 
 
     if (likelihood == "ferro"){
@@ -97,6 +107,7 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
             if (tau <= 0)
                 return (-Inf)
 
+            N = x$N
             m1 = x$m1
 
             # Likelihood (from Eq. 3)
@@ -135,11 +146,12 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
             if (nu <= 0)
                 return (-Inf)
 
-            m1 = x$m1
+            N = x$N
+            N_C = x$N_C
 
             # Suveges likelihood
-            out = sum(m1*log(1-theta_i) + 2*(N - 1 - m1)*log(theta_i) - theta_i*
-                (1 - emp.p)*sapply(x$Tu, function(x) sum(x - 1)))
+            out = sum((N-1-N_C)*log(1-theta_i) + 2*N_C*log(theta_i) - theta_i*
+                (1 - emp.p)*sapply(SK, function(x) sum(x)))
 
             # Priors
             out = out + sum(dbeta(theta_i, theta*nu, (1-theta)*nu, log = TRUE))
@@ -203,5 +215,6 @@ theta_hier = function(y, u, n, prior, likelihood, ...){
 
     par = mcmc_out$params[,c(1:R, ifelse(likelihood == "ferro", 2, 1)*R+1)]
 
-    return (list("y" = ind.obs, "N" = N, "T_C" = T_C, "mcmc" = par, "keep" = keep.index))
+    return (list("y" = ind.obs, "N" = N, "T_C" = T_C, "mcmc" = par, "keep" = keep.index,
+        "likelihood" = likelihood, "K" = K))
     }
