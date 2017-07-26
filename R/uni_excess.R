@@ -32,15 +32,6 @@
 #' @export
 #'
 
-x = rnorm(10000)
-uq = 0.90
-r = 0
-m.ksi = 0
-s.ksi = 10
-nburn = 10000
-nmcmc = 10000
-window = 200
-
 uni_excess = function(x, uq = 0.95, threshold, r = 0, m.ksi = 0, s.ksi = 10,
     nburn = 10000, nmcmc = 10000, window = 200, chain_init){
 
