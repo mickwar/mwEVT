@@ -124,8 +124,9 @@ theta_hier = function(y, u, n, prior, likelihood, K = 1, chain_init, ...){
             out = out + dgamma(tau, prior$tau_a, prior$tau_b, log = TRUE)
             return (out)
             }
-        mcmc_out = mcmc_sampler(data = dat, target = calc.post, nparam = 2*R + 4,
-            groups = list(1:R, R + (1:R), 2*R + (1:4)), ...)
+#       mcmc_out = mcmc_sampler(data = dat, target = calc.post, nparam = 2*R + 4,
+#           groups = list(1:R, R + (1:R), 2*R + (1:4)), ...)
+        mcmc_out = mcmc_sampler(data = dat, target = calc.post, nparam = R + 2)
     } else {
         if (missing(prior))
             prior = list("theta_a" = 1, "theta_b" = 1/2,
@@ -159,8 +160,9 @@ theta_hier = function(y, u, n, prior, likelihood, K = 1, chain_init, ...){
             out = out + dgamma(nu, prior$nu_a, prior$nu_b, log = TRUE)
             return (out)
             }
-        mcmc_out = mcmc_sampler(data = dat, target = calc.post, nparam = R + 2,
-            groups = list(1:R, R+(1:2)), ...)
+#       mcmc_out = mcmc_sampler(data = dat, target = calc.post, nparam = R + 2,
+#           groups = list(1:R, R+(1:2)), ...)
+        mcmc_out = mcmc_sampler(data = dat, target = calc.post, nparam = R + 2)
         }
 
     if (R > 1){
